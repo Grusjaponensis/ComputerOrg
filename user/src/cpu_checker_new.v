@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 `define S0 4'b0000
 `define S1 4'b0001
 `define S2 4'b0010
@@ -14,19 +15,6 @@
 `define S13 4'b1101
 `define S14 4'b1110
 `define S15 4'b1111
-`define Asterisk 8'b00101010
-`define Numsign 8'b00100011
-`define Dollar 8'b00100100
-`define Zero 8'b00110000
-`define Nine 8'b00111001
-`define Less 8'b00111100
-`define Equal 8'b00111101
-`define At 8'b01000000
-`define Caret 8'b01011110
-`define A 8'b01100001
-`define F 8'b01100110
-`define Colon 8'b00111010
-`define Space 8'b00100000
 `define CounterZeroThreeBits 3'b000
 `define CounterZeroFourBits 4'b0000
 
@@ -71,19 +59,38 @@ module cpu_checker(
                         counter1 <= counter1 + 3'b001;
                         status <= `S1; 
                     end
-                    else if (char == "@") begin
-                        if (counter1 <= 3'b100 && counter1 >= 3'b001) begin
-                            status <= `S2;
-                            counter1 <= `CounterZeroThreeBits;
+                    else if (char >= "0" && char <= "9") begin
+                        if (counter1 == 3'b001) begin
+                            counter1 <= counter1 + 3'b001;
+                            status <= `S1;
                         end
                         else begin
                             status <= `S0;
                             counter1 <= `CounterZeroThreeBits;
                         end
                     end
+                    else if (char == "@") begin
+                        if (counter1 <= 3'b100 && counter1 >= 3'b001) begin
+                            counter1 <= `CounterZeroThreeBits;
+                            status <= `S2;
+                        end
+                        else begin
+                            counter1 <= `CounterZeroThreeBits;
+                            status <= `S0;
+                        end
+                    end
+                    else if (char == "^") begin
+                        if (counter1 == 3'b000) begin
+                            status <= `S1;
+                        end
+                        else begin
+                            counter1 <= `CounterZeroThreeBits;
+                            status <= `S0;
+                        end
+                    end
                     else begin
-                        status <= `S0;
                         counter1 <= `CounterZeroThreeBits;
+                        status <= `S0;
                     end
                 end 
                 `S2: begin
@@ -93,15 +100,16 @@ module cpu_checker(
                     end
                     else if (char == ":") begin
                         if (counter3 == 4'b1000) begin
-                            status <= `S3;
                             counter3 <= `CounterZeroFourBits;
+                            status <= `S3;
                         end
                         else begin
-                            status <= `S0;
                             counter3 <= `CounterZeroFourBits;
+                            status <= `S0;
                         end
                     end
                     else begin
+                        counter3 <= `CounterZeroFourBits;
                         status <= `S0;
                     end
                 end 
@@ -124,27 +132,39 @@ module cpu_checker(
                         counter2 <= counter2 + 3'b001;
                         status <= `S4;
                     end
+                    // else if ((char >= "0" && char <= "9")) begin
+                    //     if (counter2 == 3'b001) begin
+                    //         counter2 <= counter2 + 3'b001;
+                    //         status <= `S4;
+                    //     end
+                    //     else begin
+                    //         status <= `S0;
+                    //         counter2 <= `CounterZeroThreeBits;
+                    //     end
+                    // end
                     else if (char == " ") begin
                         if (counter2 <= 3'b100 && counter2 >= 3'b001) begin
                             status <= `S5;
+                            counter2 <= `CounterZeroThreeBits;
                         end
                         else begin
-                            status <= `S0;
                             counter2 <= `CounterZeroThreeBits;
+                            status <= `S0;
                         end
                     end
                     else if (char == "<") begin
-                        if (counter2 <= 3'b100 && counter2 >= 3'b001) begin
+                        if (counter2 <= 3'b011 && counter2 >= 3'b001) begin
                             status <= `S6;
+                            counter2 <= `CounterZeroThreeBits;
                         end
                         else begin
-                            status <= `S0;
                             counter2 <= `CounterZeroThreeBits;
+                            status <= `S0;
                         end
                     end
                     else begin
-                        status <= `S0;
                         counter2 <= `CounterZeroThreeBits;
+                        status <= `S0;
                     end
                 end 
                 `S5: begin
@@ -181,28 +201,28 @@ module cpu_checker(
                     if ((char >= "0" && char <= "9") || (char >= "a" && char <= "f")) begin
                         counter4 <= counter4 + 4'b0001;
                         status <= `S8;
-                    end// continue digits?
+                    end
                     else if (char == "#") begin
                         if (counter4 == 4'b0111) begin
-                            status <= `S9;
                             counter4 <= `CounterZeroFourBits;
+                            status <= `S9;
                         end
                         else begin
-                            status <= `S0;
                             counter4 <= `CounterZeroFourBits;
+                            status <= `S0;
                         end
                     end
                     else begin
-                        status <= `S0;
                         counter4 <= `CounterZeroFourBits;
+                        status <= `S0;
                     end
                 end 
                 `S9: begin
                     if (char == "^") begin
-                        status <= `S0;
+                        status <= `S1;
                     end
                     else begin
-                        status <=`S0;
+                        status <= `S0;
                     end
                 end 
                 `S10: begin
@@ -212,27 +232,27 @@ module cpu_checker(
                     end
                     else if (char == " ") begin
                         if (counter5 == 4'b1000) begin
-                            status <= `S11;
                             counter5 <= `CounterZeroFourBits;
+                            status <= `S11;
                         end
                         else begin
-                            status <= `S0;
                             counter5 <= `CounterZeroFourBits;
+                            status <= `S0;
                         end
                     end
                     else if (char == "<") begin
                         if (counter5 == 4'b1000) begin
-                            status <= `S12;
                             counter5 <= `CounterZeroFourBits;
+                            status <= `S12;
                         end
                         else begin
-                            status <= `S0;
                             counter5 <= `CounterZeroFourBits;
+                            status <= `S0;
                         end
                     end
                     else begin
-                        status <= `S0;
                         counter5 <= `CounterZeroFourBits;
+                        status <= `S0;
                     end
                 end 
                 `S11: begin
@@ -241,6 +261,9 @@ module cpu_checker(
                     end
                     else if (char == "<") begin
                         status <= `S12;
+                    end
+                    else begin
+                        status <= `S0;
                     end
                 end 
                 `S12: begin
@@ -269,21 +292,26 @@ module cpu_checker(
                     end
                     else if (char == "#") begin
                         if (counter6 == 4'b0111) begin
-                            status <= `S15;
                             counter6 <= `CounterZeroFourBits;
+                            status <= `S15;
                         end
                         else begin
-                            status <= `S0;
                             counter6 <= `CounterZeroFourBits;
+                            status <= `S0;
                         end
                     end
                     else begin
-                        status <= `S0;
                         counter6 <= `CounterZeroFourBits;
+                        status <= `S0;
                     end
                 end 
                 `S15: begin
-                    status <= `S0;
+                    if (char == "^") begin
+                        status <= `S1;
+                    end
+                    else begin
+                        status <= `S0;
+                    end
                 end 
                 default: begin
                     status <= `S0;
