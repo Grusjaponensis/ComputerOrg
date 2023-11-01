@@ -4,4 +4,4 @@
 
 Consisting Logisim `.circ` projects, Verilog HDL code, and MIPS assembly code. From **pre** to **single-style  CPU**, Logisim version and Verilog ver.
 
-#### **For references only.**
+#### **For reference only.**
