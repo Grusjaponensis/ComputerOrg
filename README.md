@@ -1,6 +1,7 @@
 # ComputerOrg
-For BUAA  Computer Organization and Architecture Class. 
+> ##### 2023 Autumn, Computer Organization and Architecture
+> ##### School of Computer Science and Engineering, Beihang University. 
 
-A version code repository for Verilog code and assembly language.
+Consisting Logisim `.circ` projects, Verilog HDL code, and MIPS assembly code. From **pre** to **single-style  CPU**, Logisim version and Verilog ver.
 
-Added with some Logisim project code(XML).
+#### **For references only.**
