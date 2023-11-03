@@ -5,7 +5,6 @@ module mips(
     // PC
     wire [31:0] 	pC;
     wire [11:0] 	InstrAddr;
-
     wire [31:0]     next_PC = (PCsrc == 1'b1 && Zero == 1'b1) ? ((ExtResult << 2) + pC + 32'h0000_0004) : // beq
                               (Jump == 2'b01) ? RD1 :                                           // jr
                               (Jump == 2'b10) ? ({pC[31:28], Addr26, {2{1'b0}}}) :              // jal
@@ -42,7 +41,6 @@ module mips(
     // GRF
     wire [31:0] 	RD1;
     wire [31:0] 	RD2;
-
     wire [31:0]     WD = (ShfToReg == 1'b1) ? (ExtResult << 16) :   // lui
                          (MemToReg == 1'b1) ? ALUResult :
                          (Jump == 2'b10) ? pC + 32'h0000_0004 :     // jal ?
@@ -56,7 +54,6 @@ module mips(
     // ALU
     wire        	Zero;
     wire [31:0] 	ALUResult;
-
     wire [31:0]     srcB = (ALUsrc == 1'b1) ? ExtResult : RD2;
 
     // DM
@@ -65,19 +62,19 @@ module mips(
     PC PC(
     	.clk       	( clk        ),
     	.reset     	( reset      ),
-    	.next_PC   	( next_PC    ),
+    	.next_PC   	( next_PC    ), // MUX(beq/jal/jr) ->
     	.PC        	( pC         ), // -> Adder
     	.InstrAddr 	( InstrAddr  )  // -> IM
     );
 
     IM IM(
-    	.InstrAddr 	( InstrAddr  ),
-    	.Instr     	( Instr      ) // -> Splitter
+    	.InstrAddr 	( InstrAddr  ), // PC ->
+    	.Instr     	( Instr      )  // -> Splitter
     );
 
     Splitter Splitter(
-    	.Instr  	( Instr   ),
-    	.Addr26 	( Addr26  ),
+    	.Instr  	( Instr   ), // IM ->
+    	.Addr26 	( Addr26  ), // -> MUX for jump
     	.Imm16  	( Imm16   ), // -> Ext
     	.func   	( func    ), // -> CtrlUnit
     	.Rd     	( Rd      ), // -> GRF
@@ -87,28 +84,28 @@ module mips(
     );
 
     Extender Extender(
-    	.Imm16     	( Imm16      ),
-    	.ExtRes    	( ExtRes     ),
+    	.Imm16     	( Imm16      ), // Splitter ->
+    	.ExtRes    	( ExtRes     ), // CtrlUnit ->
     	.ExtResult 	( ExtResult  )  // -> shifter, ALU
     );
 
     GRF GRF(
     	.clk      	( clk       ),
     	.reset    	( reset     ),
-    	.RegWrite 	( RegWrite  ),
-    	.pC    	    ( pC        ),
-    	.WD       	( WD        ),
-    	.A1       	( A1        ),
-    	.A2       	( A2        ),
-    	.WA       	( WA        ),
+    	.RegWrite 	( RegWrite  ), // CtrlUnit ->
+    	.pC    	    ( pC        ), // PC ->
+    	.WD       	( WD        ), // Extender / ALU / pC / DM ->
+    	.A1       	( A1        ), // Splitter: Rs ->
+    	.A2       	( A2        ), // Splitter: Rt ->
+    	.WA       	( WA        ), // Splitter: Rt/Rd / 
     	.RD1      	( RD1       ), // -> ALU
     	.RD2      	( RD2       )  // -> ALU, DM
     );
 
     ALU ALU(
-    	.srcA   	( RD1       ),
-    	.srcB   	( srcB      ),
-    	.ALUop  	( ALUop     ),
+    	.srcA   	( RD1       ), // GRF ->
+    	.srcB   	( srcB      ), // GRF / Extender ->
+    	.ALUop  	( ALUop     ), // CtrlUnit ->
     	.Zero   	( Zero      ), // -> MUX
     	.Result 	( ALUResult )  // -> DM, GRF
     );
@@ -116,17 +113,17 @@ module mips(
     DM DM(
     	.clk       	( clk        ),
     	.reset     	( reset      ),
-    	.WriteData 	( WriteData  ),
-    	.ReadData  	( ReadData   ),
-    	.Addr      	( ALUResult  ),
-    	.WD        	( RD2        ),
-        .pC         ( pC         ),
+    	.WriteData 	( WriteData  ), // CtrlUnit ->
+    	.ReadData  	( ReadData   ), // CtrlUnit ->
+    	.Addr      	( ALUResult  ), // ALU ->
+    	.WD        	( RD2        ), // GRF ->
+        .pC         ( pC         ), // PC ->
     	.RD        	( DM_RD      )  // -> GRF
     );
 
     CtrlUnit CtrlUnit(
-    	.op        	( Op         ),
-    	.func      	( func       ),
+    	.op        	( Op         ), // Splitter ->
+    	.func      	( func       ), // Splitter ->
     	.ReadData  	( ReadData   ), // -> DM
     	.WriteData 	( WriteData  ), // -> DM
     	.MemToReg  	( MemToReg   ), // -> MUX
