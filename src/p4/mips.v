@@ -6,7 +6,7 @@ module mips(
     wire [31:0] 	pC;
     wire [11:0] 	InstrAddr;
 
-    wire [31:0]     next_PC = (PCsrc == 1'b1 && Zero == 1'b1) ? (ExtResult << 2 + pC + 32'h4) : // beq
+    wire [31:0]     next_PC = (PCsrc == 1'b1 && Zero == 1'b1) ? ((ExtResult << 2) + pC + 32'h0000_0004) : // beq
                               (Jump == 2'b01) ? RD1 :                                           // jr
                               (Jump == 2'b10) ? ({pC[31:28], Addr26, {2{1'b0}}}) :              // jal
                               (pC + 32'h4);
@@ -45,7 +45,7 @@ module mips(
 
     wire [31:0]     WD = (ShfToReg == 1'b1) ? (ExtResult << 16) :   // lui
                          (MemToReg == 1'b1) ? ALUResult :
-                         (Jump == 2'b10) ? pC + 32'h0000_0008 :     // jal
+                         (Jump == 2'b10) ? pC + 32'h0000_0004 :     // jal ?
                          DM_RD;
     wire [4:0]      A1 = Rs;
     wire [4:0]      A2 = Rt;

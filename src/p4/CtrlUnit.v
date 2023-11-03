@@ -55,7 +55,17 @@ module CtrlUnit(
                 Jump = 2'b01;
             end
             else begin                          // nop
-
+                RegDst = 1'b0; // x
+                ALUsrc = 1'b0; // x
+                ALUop = 2'b00; // x
+                PCsrc = 1'b0;  // x
+                ReadData = 1'b0; // x
+                WriteData = 1'b0; // x
+                MemToReg = 1'b0; // x
+                ShfToReg = 1'b0; // x
+                RegWrite = 1'b0; // x
+                ExtRes = 1'b0; // x
+                Jump = 2'b00; // x
             end
         end
         else if (op == 6'b001101) begin         // ori
@@ -103,8 +113,8 @@ module CtrlUnit(
             ALUop = 2'b01;
             PCsrc = 1'b1;
             ReadData = 1'b0; // x
-            WriteData = 1'b1; // x
-            MemToReg = 1'b1; // x
+            WriteData = 1'b0; // x
+            MemToReg = 1'b0; // x
             ShfToReg = 1'b0; // x
             RegWrite = 1'b0;
             ExtRes = 1'b0;
