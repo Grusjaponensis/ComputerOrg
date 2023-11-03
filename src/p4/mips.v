@@ -8,7 +8,7 @@ module mips(
 
     wire [31:0]     next_PC = (PCsrc == 1'b1 && Zero == 1'b1) ? (ExtResult << 2 + pC + 32'h4) : // beq
                               (Jump == 2'b01) ? RD1 :                                           // jr
-                              (Jump == 2'b10) ? ({pC[31:28]}, Addr26, {2{1'b0}}) :              // jal
+                              (Jump == 2'b10) ? ({pC[31:28], Addr26, {2{1'b0}}}) :              // jal
                               (pC + 32'h4);
 
     // IM
@@ -57,7 +57,7 @@ module mips(
     wire        	Zero;
     wire [31:0] 	ALUResult;
 
-    wire srcB = (ALUsrc == 1'b1) ? ExtResult : RD2;
+    wire [31:0]     srcB = (ALUsrc == 1'b1) ? ExtResult : RD2;
 
     // DM
     wire [31:0] 	DM_RD;
