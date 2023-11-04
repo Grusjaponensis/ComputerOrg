@@ -97,8 +97,8 @@ module mips(
     	.WD       	( WD        ), // Extender / ALU / pC / DM ->
     	.A1       	( A1        ), // Splitter: Rs ->
     	.A2       	( A2        ), // Splitter: Rt ->
-    	.WA       	( WA        ), // Splitter: Rt/Rd / 
-    	.RD1      	( RD1       ), // -> ALU
+    	.WA       	( WA        ), // Splitter: Rt/Rd / 31 ->
+    	.RD1      	( RD1       ), // -> ALU, PC
     	.RD2      	( RD2       )  // -> ALU, DM
     );
 
