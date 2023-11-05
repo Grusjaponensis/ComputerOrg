@@ -13,7 +13,11 @@
 
 **Synchronized Reset, Overflow Not Considered**
 
+**Notice:  **
 
+- `nop` instruction must set control signals.
+- Bit-width must be declared when declaring a variable of type `wire`.
+- Remember to save the `wave` file when using ISim.
 
 ## 2. Modules definition
 
@@ -194,7 +198,7 @@ else if ReadData == 1'b1
 
 ## 3. Circuit Diagram
 
-![Screenshot 2023-11-04 at 16.20.35](/Users/snow/Desktop/Screenshot 2023-11-04 at 16.20.35.png)
+![Screenshot 2023-11-04 at 16.20.35](/Users/snow/Desktop/Code/ComputerOrg/src/p4/Screenshot 2023-11-04 at 16.20.35.png)
 
 ## 4. Questions
 
