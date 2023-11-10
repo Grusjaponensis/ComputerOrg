@@ -18,7 +18,7 @@ module DM(
     always @(posedge clk) begin
         if (reset == 1'b1) begin
             for (i = 0; i < 3072; i = i + 1) begin
-                RAM[i] <= 32'h0000_0000;  // ?
+                RAM[i] <= 32'h0000_0000;
             end
         end
         else begin

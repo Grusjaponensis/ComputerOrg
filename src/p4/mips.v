@@ -5,9 +5,9 @@ module mips(
     // PC
     wire [31:0] 	pC;
     wire [11:0] 	InstrAddr;
-    wire [31:0]     next_PC = (PCsrc == 1'b1 && Zero == 1'b1) ? ((ExtResult << 2) + pC + 32'h0000_0004) : // beq
-                              (Jump == 2'b01) ? RD1 :                                           // jr
-                              (Jump == 2'b10) ? ({pC[31:28], Addr26, {2{1'b0}}}) :              // jal
+    wire [31:0]     next_PC = (Jump == 3'b011 && Zero == 1'b1) ? ((ExtResult << 2) + pC + 32'h0000_0004) :   // beq
+                              (Jump == 3'b001) ? RD1 :                                                       // jr
+                              (Jump == 3'b010) ? ({pC[31:28], Addr26, {2{1'b0}}}) :                          // jal
                               (pC + 32'h4);
 
     // IM
@@ -26,14 +26,13 @@ module mips(
     wire       	ReadData;
     wire       	WriteData;
     wire       	MemToReg;
-    wire       	PCsrc;
     wire       	RegDst;
     wire       	ALUsrc;
     wire       	ShfToReg;
     wire       	RegWrite;
-    wire [1:0] 	ALUop;
+    wire [2:0] 	ALUop;
     wire       	ExtRes;
-    wire [1:0]  Jump;
+    wire [2:0]  Jump;
 
     // Extender
     wire [31:0] 	ExtResult;
@@ -43,12 +42,12 @@ module mips(
     wire [31:0] 	RD2;
     wire [31:0]     WD = (ShfToReg == 1'b1) ? (ExtResult << 16) :   // lui
                          (MemToReg == 1'b1) ? ALUResult :
-                         (Jump == 2'b10) ? pC + 32'h0000_0004 :     // jal ?
+                         (Jump == 3'b010) ? pC + 32'h0000_0004 :     // jal ?
                          DM_RD;
     wire [4:0]      A1 = Rs;
     wire [4:0]      A2 = Rt;
     wire [4:0]      WA = (RegDst == 1'b1) ? Rd :
-                         (Jump == 2'b10) ? 5'b11111 : // jal
+                         (Jump == 3'b010) ? 5'b11111 : // jal
                          Rt;
 
     // ALU
@@ -127,7 +126,6 @@ module mips(
     	.ReadData  	( ReadData   ), // -> DM
     	.WriteData 	( WriteData  ), // -> DM
     	.MemToReg  	( MemToReg   ), // -> MUX
-    	.PCsrc     	( PCsrc      ), // -> MUX
     	.RegDst    	( RegDst     ), // -> MUX
     	.ALUsrc    	( ALUsrc     ), // -> MUX
     	.ShfToReg  	( ShfToReg   ), // -> MUX

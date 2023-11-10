@@ -18,6 +18,7 @@
 - `nop` instruction must set control signals.
 - Bit-width must be declared when declaring a variable of type `wire`.
 - Remember to save the `wave` file when using ISim.
+- Notice the brackets when connecting different width of signals, like `{PC[31:28], Addr26, {2{1'b0}}}`, both bit-width and brackets should be used.
 
 ## 2. Modules definition
 
@@ -37,7 +38,7 @@
 
 ```bash
 if beq && Zero then
-		PC <= PC + 4 + Sign_ext(imm16)
+		PC <= PC + 4 + (Sign_ext(imm16) << 2 )
 else if jal then
 		PC <= {PC[31:28], addr26, 00}
 else if jr then
@@ -116,20 +117,20 @@ if RegWrite == 1 then
 | :-------: | :-------: | :----: | :------------: |
 |   srcA    |   input   | [31:0] |    `GRF ->`    |
 |   srcB    |   input   | [31:0] | `Ext / GRF ->` |
-|   ALUop   |   input   | [1:0]  |   *`signal`*   |
+|   ALUop   |   input   | [2:0]  |   *`signal`*   |
 |   Zero    |  output   |        | ` -> MUX(beq)` |
 |  Result   |  output   | [31:0] | `-> GRF / DM`  |
 
 - #### Behavioral Description 
 
 ```bash
-if ALUop == 2'b01
+if ALUop == 3'b000
 		Result <= A + B
-else if ALUop == 2'b01
+else if ALUop == 3'b001
 		Result <= A - B
-else if ALUop == 2'b10
+else if ALUop == 3'b010
 		Result <= A & B
-else if ALUop == 2'b11
+else if ALUop == 3'b011
 		Result <= A | B
 		
 if A - B == 0 then
@@ -178,23 +179,23 @@ else if ReadData == 1'b1
 |  ALUsrc   |  output   |       |    `ALU`    |
 | ShfToReg  |  output   |       |    `GRF`    |
 | RegWrite  |  output   |       |    `GRF`    |
-|   ALUop   |  output   | [1:0] |    `ALU`    |
+|   ALUop   |  output   | [2:0] |    `ALU`    |
 |  ExtRes   |  output   |       | `Extender`  |
-|   Jump    |  output   | [1:0] | `PC / GRF`  |
+|   Jump    |  output   | [2:0] | `PC / GRF`  |
 
-- #### Corresponding Intsructions
+- #### Corresponding Instructions
 
   |       | RegDst | ALUsrc | ALUop[1:0] | PCsrc | ReadData | WriteData | MemToReg | ShfToReg | RegWrite | ExtRes | Jump[1:0] |
   | ----- | :----: | :----: | :--------: | :---: | :------: | :-------: | :------: | :------: | :------: | :----: | :-------: |
-  | `ADD` |   1    |   0    |  00(Add)   |   0   |    x     |     x     |    1     |    0     |    1     |   x    |    00     |
-  | `SUB` |   1    |   0    |  01(Sub)   |   0   |    x     |     x     |    1     |    0     |    1     |   x    |    00     |
-  | `ORI` |   0    |   1    |   11(Or)   |   x   |    x     |     x     |    1     |    0     |    1     |   1    |    00     |
-  | `LW`  |   0    |   1    |  00(Add)   |   0   |    1     |     x     |    0     |    0     |    1     |   0    |    00     |
-  | `SW`  |   x    |   1    |  00(Add)   |   0   |    x     |     1     |    x     |    0     |    0     |   0    |    00     |
-  | `BEQ` |   x    |   0    |  01(Sub)   |   1   |    x     |     x     |    x     |    x     |    0     |   0    |    00     |
-  | `LUI` |   0    |   x    |     xx     |   0   |    x     |     x     |    x     |    1     |    1     |   x    |    00     |
-  | `JAR` |   0    |   0    |     xx     |   0   |    x     |     x     |    0     |    0     |    1     |   x    |    10     |
-  | `JR`  |   x    |   x    |     xx     |   x   |    x     |     x     |    x     |    x     |    0     |   x    |    01     |
+  | `ADD` |   1    |   0    |  000(Add)   |   0   |    x     |     x     |    1     |    0     |    1     |   x    |    000     |
+  | `SUB` |   1    |   0    |  001(Sub)   |   0   |    x     |     x     |    1     |    0     |    1     |   x    |    000     |
+  | `ORI` |   0    |   1    |   011(Or)   |   x   |    x     |     x     |    1     |    0     |    1     |   1    |    000     |
+  | `LW`  |   0    |   1    |  000(Add)   |   0   |    1     |     x     |    0     |    0     |    1     |   0    |    000     |
+  | `SW`  |   x    |   1    |  000(Add)   |   0   |    x     |     1     |    x     |    0     |    0     |   0    |    000     |
+  | `BEQ` |   x    |   0    |  001(Sub)   |   1   |    x     |     x     |    x     |    x     |    0     |   0    |    000     |
+  | `LUI` |   0    |   x    |     xxx     |   0   |    x     |     x     |    x     |    1     |    1     |   x    |    000     |
+  | `JAL` |   0    |   0    |     xxx     |   0   |    x     |     x     |    0     |    0     |    1     |   x    |    010     |
+  | `JR`  |   x    |   x    |     xxx     |   x   |    x     |     x     |    x     |    x     |    0     |   x    |    001     |
 
 ## 3. Circuit Diagram
 
