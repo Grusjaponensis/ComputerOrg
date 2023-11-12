@@ -185,17 +185,17 @@ else if ReadData == 1'b1
 
 - #### Corresponding Instructions
 
-  |       | RegDst | ALUsrc | ALUop[1:0] | PCsrc | ReadData | WriteData | MemToReg | ShfToReg | RegWrite | ExtRes | Jump[1:0] |
-  | ----- | :----: | :----: | :--------: | :---: | :------: | :-------: | :------: | :------: | :------: | :----: | :-------: |
-  | `ADD` |   1    |   0    |  000(Add)   |   0   |    x     |     x     |    1     |    0     |    1     |   x    |    000     |
-  | `SUB` |   1    |   0    |  001(Sub)   |   0   |    x     |     x     |    1     |    0     |    1     |   x    |    000     |
-  | `ORI` |   0    |   1    |   011(Or)   |   x   |    x     |     x     |    1     |    0     |    1     |   1    |    000     |
-  | `LW`  |   0    |   1    |  000(Add)   |   0   |    1     |     x     |    0     |    0     |    1     |   0    |    000     |
-  | `SW`  |   x    |   1    |  000(Add)   |   0   |    x     |     1     |    x     |    0     |    0     |   0    |    000     |
-  | `BEQ` |   x    |   0    |  001(Sub)   |   1   |    x     |     x     |    x     |    x     |    0     |   0    |    000     |
-  | `LUI` |   0    |   x    |     xxx     |   0   |    x     |     x     |    x     |    1     |    1     |   x    |    000     |
-  | `JAL` |   0    |   0    |     xxx     |   0   |    x     |     x     |    0     |    0     |    1     |   x    |    010     |
-  | `JR`  |   x    |   x    |     xxx     |   x   |    x     |     x     |    x     |    x     |    0     |   x    |    001     |
+  |       | RegDst | ALUsrc | ALUop[1:0] | ReadData | WriteData | MemToReg | ShfToReg | RegWrite | ExtRes | Jump[1:0] |
+  | ----- | :----: | :----: | :--------: | :------: | :-------: | :------: | :------: | :------: | :----: | :-------: |
+  | `ADD` |   1    |   0    |  000(Add)   |    x     |     x     |    1     |    0     |    1     |   x    |    000     |
+  | `SUB` |   1    |   0    |  001(Sub)   |    x     |     x     |    1     |    0     |    1     |   x    |    000     |
+  | `ORI` |   0    |   1    |   011(Or)   |    x     |     x     |    1     |    0     |    1     |   1    |    000     |
+  | `LW`  |   0    |   1    |  000(Add)   |    1     |     x     |    0     |    0     |    1     |   0    |    000     |
+  | `SW`  |   x    |   1    |  000(Add)   |    x     |     1     |    x     |    0     |    0     |   0    |    000     |
+  | `BEQ` |   x    |   0    |  001(Sub)   |   x     |     x     |    x     |    x     |    0     |   0    |    000     |
+  | `LUI` |   0    |   x    |     xxx     |    x     |     x     |    x     |    1     |    1     |   x    |    000     |
+  | `JAL` |   0    |   0    |     xxx     |    x     |     x     |    0     |    0     |    1     |   x    |    010     |
+  | `JR`  |   x    |   x    |     xxx     |    x     |     x     |    x     |    x     |    0     |   x    |    001     |
 
 ## 3. Circuit Diagram
 
