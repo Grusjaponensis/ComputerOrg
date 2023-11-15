@@ -1,6 +1,8 @@
-module PC(
+`timescale 1ns / 1ps
+module F_PC(
     input clk,
     input reset,
+    input EN_Pc,
     input [31:0] next_PC, 
     output [31:0] Pc, 
     output [11:0] InstrAddr
@@ -9,7 +11,9 @@ module PC(
     
     always @(posedge clk) begin
         if (reset) Instr <= 32'h0000_3000; // synchronize reset
-        else Instr <= next_PC;
+        else begin
+            if (EN_Pc == 1'b1) Instr <= next_PC; 
+        end
     end
     
     wire [31:0] Instr_temp = Instr - 32'h0000_3000;

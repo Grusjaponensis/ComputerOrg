@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 `define R 6'b000000
 `define ADD 6'b100000
 `define SUB 6'b100010
@@ -18,9 +19,17 @@
 `define ALU_or 4'b0011
 `define ALU_lui 4'b0100
 
+/////////// SelExtRes //////////
+`define EXT_sign 1'b0
+`define EXT_zero 1'b1
+
+/////////// SelALUsrc //////////
+`define Rt_Data 1'b0
+`define Ext_Data 1'b1
+
 //////////// SelRegDst /////////
-`define RF_rd 3'b000
-`define RF_rt 3'b001
+`define RF_rt 3'b000
+`define RF_rd 3'b001
 `define RF_ra 3'b010
 
 /////////// SelRegWD ////////
@@ -33,10 +42,6 @@
 `define Beq_Branch 3'b001
 `define Jal_Jump 3'b010
 `define Jr_Jump 3'b011
-
-/////////// SelExtRes //////////
-`define EXT_sign 1'b0
-`define EXT_zero 1'b1
 
 /////////// CMPop //////////////
 `define BEQ_cmp 3'b000
@@ -55,36 +60,41 @@ module GeneralController(
     output [3:0] SelRegWD,  // choose data from DM to RF
     output [2:0] CMPop
 );
-
+    //////////////// D ///////////////
     assign RegWriteEN = (op == `R && (func == `ADD) || (func == `SUB));
 
     assign SelExtRes = (op == `ORI) ? `EXT_zero : `EXT_sign;
-
-    assign SelALUsrc = (op == `ORI || op == `LW || op == `SW);
-
-    assign ALUop = ((op == `R && (func == `ADD || func == `JR || func == `NOP)) || op == `LW || op == `SW || op == `JAL) ? `ALU_add :
-                   ((op == `R && (func == `SUB))) ? `ALU_sub : // beq需要前移
-                   (op == `LUI) ? `ALU_lui :
-                   `ALU_or; // ori
-
-    assign SelRegDst = (op == `R && (func == `ADD || func == `SUB)) ? `RF_rd :
-                       (op == `LUI || op == `LW || op == `LUI) ? `RF_rt :
-                       (op == `JAL) ? `RF_rd :
-                       `RF_rt;
-
-    assign DMWriteEN = (op == `SW) ? 1'b1 : 1'b0;
-
-    assign DMReadEN = (op == `LW) ? 1'b1 : 1'b0;
 
     assign SelPCsrc = (op == `BEQ) ? `Beq_Branch :
                       (op == `JAL) ? `Jal_Jump :
                       (op == `R && func == `JR) ? `Jr_Jump :
                       `No_Branch;
 
+    assign CMPop = (op == `BEQ) ? `BEQ_cmp : 3'b000;
+    
+    //////////////// E ///////////////
+    assign SelALUsrc = (op == `ORI || op == `LW || op == `SW) ? `Ext_Data : `Rt_Data;
+
+    assign ALUop = ((op == `R && (func == `ADD || func == `JR || func == `NOP)) || op == `LW || op == `SW || op == `JAL) ? `ALU_add :
+                   ((op == `R && (func == `SUB))) ? `ALU_sub : // beq需要前移
+                   (op == `LUI) ? `ALU_lui :
+                   `ALU_or; // ori
+    
+    //////////////// M ////////////////
+    assign DMWriteEN = (op == `SW) ? 1'b1 : 1'b0;
+
+    assign DMReadEN = (op == `LW) ? 1'b1 : 1'b0;
+
+    //////////////// W ////////////////
+    assign SelRegDst = (op == `R && (func == `ADD || func == `SUB)) ? `RF_rd :
+                       (op == `LUI || op == `LW || op == `LUI) ? `RF_rt :
+                       (op == `JAL) ? `RF_ra :
+                       `RF_rt;
+
     assign SelRegWD = (op == `LW) ? `DM_Data :
                       ((op == `R && (func == `ADD || func == `SUB)) || op == `LUI || op == `ORI || op == `NOP) ? `ALU_Data :
-                      (op == `JAL) ? `PC_data :
-                      `DM_data;
+                      (op == `JAL) ? `PC_Data :
+                      `DM_Data;
     
-    assign CMPop = (op == `BEQ) ? `BEQ_cmp : 3'b000;
+
 endmodule //GeneralController

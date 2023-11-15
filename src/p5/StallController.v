@@ -1,3 +1,0 @@
-module StallController();
-    
-endmodule //StallController

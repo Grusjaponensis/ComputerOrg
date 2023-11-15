@@ -1,4 +1,5 @@
-module IM(
+`timescale 1ns / 1ps
+module F_IM(
     input [11:0] InstrAddr,
     output [31:0] Instr
 );

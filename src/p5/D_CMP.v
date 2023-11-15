@@ -1,5 +1,6 @@
+`timescale 1ns / 1ps
 `define BEQ_cmp 3'b000
-module CMP(
+module D_CMP(
     input [31:0] Data1,
     input [31:0] Data2,
     input [2:0] CMPop,

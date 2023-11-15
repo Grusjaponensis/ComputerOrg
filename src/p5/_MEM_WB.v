@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module MEM_WB(
     input clk,
     input reset,
@@ -5,10 +6,12 @@ module MEM_WB(
     input [31:0] Pc4_MEM,
     input [31:0] ALUout_MEM,
     input [31:0] DM_Data_MEM,
+    input [4:0] WriteReg_MEM,
     output reg [31:0] Instr_WB,
     output reg [31:0] Pc4_WB, 
     output reg [31:0] ALUout_WB,
-    output reg [31:0] DM_Data_WB
+    output reg [31:0] DM_Data_WB,
+    output reg [4:0] WriteReg_WB
 );
     always @(posedge clk) begin
         if (reset == 1'b1) begin

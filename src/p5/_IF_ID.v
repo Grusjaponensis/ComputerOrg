@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module IF_ID(
     input clk,
     input En_IF_ID,

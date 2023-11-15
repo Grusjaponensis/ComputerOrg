@@ -1,4 +1,5 @@
-module DM(
+`timescale 1ns / 1ps
+module M_DM(
     input clk,
     input reset, 
     input DMWriteEN,

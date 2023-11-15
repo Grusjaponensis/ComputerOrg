@@ -1,6 +1,7 @@
+`timescale 1ns / 1ps
 `define EXT_sign 1'b0
 `define EXT_zero 1'b1
-module Extender(
+module D_Extender(
     input [15:0] Imm16,
     input SelExtRes,
     output [31:0] ExtResult

@@ -1,4 +1,5 @@
-module GRF(
+`timescale 1ns / 1ps
+module D_GRF(
     input clk,
     input reset,
     input RegWrite,
