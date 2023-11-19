@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-module ID_EX(
+module _ID_EX(
     input clk,
     input clr,
     input reset,

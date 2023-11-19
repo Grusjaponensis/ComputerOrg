@@ -24,6 +24,7 @@ module mips_tb;
         #2 reset = 1'b1;
         #4;
         #2 reset = 1'b0;
+		#10000 $stop;
 	end
     always #1 clk = ~clk;
 endmodule

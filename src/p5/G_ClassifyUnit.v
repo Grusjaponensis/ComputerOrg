@@ -21,7 +21,7 @@
 `define LUI 6'b001111
 `define JAL 6'b000011
 
-module ClassifyUnit(
+module G_ClassifyUnit(
     input [31:0] Instr,
     output load,
     output store,

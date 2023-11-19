@@ -20,7 +20,7 @@
 `define Imm16 15:0
 `define Addr26 25:0
 
-module HazardController(
+module G_HazardController(
     input [31:0] Instr_ID,
     input [31:0] Instr_EX,
     input [31:0] Instr_MEM,
@@ -68,29 +68,32 @@ module HazardController(
         .cal_r(D_cal_r),
         .cal_i(D_cal_i),
         .branch(D_branch),
-        .j_r(D_j_r),
-        .WriteReg()
+        .j_r(D_j_r)
     );
     
     // ---------- stall_R/stall_i, D_T_use(Rs/Rt) = 1 ---------- //
     wire stall_cal_r = D_cal_r && E_load && (D_Rs == E_Rt || D_Rt == E_Rt) && E_Rt != 5'b0;
     wire stall_cal_i = D_cal_i && E_load && (D_Rs == E_Rt) && E_Rt != 5'b0;
 
-    // ---------- stall_load, D_T_use(Rs/Rt) = 1 ---------- //
+    // ---------- stall_load, D_T_use(Rs) = 1 ---------- //
     wire stall_load = D_load && E_load && (D_Rs == E_Rt) && E_Rt != 5'b0;
 
-    // ---------- stall_b, D_T_use(Rs/Rt) = 0 ---------- //
+    // ---------- stall_store, D_T_use(Rs) = 1 ---------- //
+    wire stall_store = D_store && E_load && (D_Rs == E_Rt) && E_Rt != 5'b0;
+
+    // ---------- stall_branch, D_T_use(Rs/Rt) = 0 ---------- //
     wire stall_branch = D_branch && ((E_load && (D_Rs == E_Rt || D_Rt == E_Rt) && E_Rt != 5'b0) || 
                                     (M_load && (D_Rs == M_Rt || D_Rt == M_Rt) && M_Rt != 5'b0) || 
                                     (E_cal_r && (D_Rs == E_Rd || D_Rt == E_Rd) && E_Rd != 5'b0) ||
                                     (E_cal_i && (D_Rs == E_Rt || D_Rt == E_Rt) && E_Rt != 5'b0));
 
+    // ---------- stall_j_r, D_T_use(Rs/Rt) = 0 ---------- //
     wire stall_j_r = D_j_r && ((E_load && (D_Rs == E_Rt) && E_Rt != 5'b0) ||
                               (M_load && (D_Rs == M_Rt) && M_Rt != 5'b0) ||
                               (E_cal_r && (D_Rs == E_Rd) && E_Rd != 5'b0) ||
                               (E_cal_i && (D_Rs == E_Rt) && E_Rt != 5'b0));
 
-    wire stall = stall_cal_r | stall_cal_i | stall_load | stall_branch | stall_j_r;
+    wire stall = stall_cal_r | stall_cal_i | stall_load | stall_store | stall_branch | stall_j_r;
     assign PC_En = !stall;
     assign IF_ID_En = !stall;
     assign ID_EX_clr = stall;
@@ -111,7 +114,7 @@ module HazardController(
 
     G_GeneralController E_Signal(
         .op(Instr_EX[`Op]),
-        .func(Instr_EX[`func])
+        .func(Instr_EX[`func]),
         .RegWriteEN(E_RegWriteEN)
     );
 
@@ -181,14 +184,11 @@ module HazardController(
 
     assign Forward_RS_E = (E_Rs == M_WriteReg && M_WriteReg != 5'b0 && M_RegWriteEN) ? 3'b001 :
                           (E_Rs == W_WriteReg && W_WriteReg != 5'b0 && W_RegWriteEN) ? 3'b010 :
-                          (E_Rs == 5'h1f && M_j_addr) ? 3'b011 :
                           3'b000;
     assign Forward_RT_E = (E_Rt == M_WriteReg && M_WriteReg != 5'b0 && M_RegWriteEN) ? 3'b001 :
                           (E_Rt == W_WriteReg && W_WriteReg != 5'b0 && W_RegWriteEN) ? 3'b010 :
-                          (E_Rt == 5'h1f && M_j_addr) ? 3'b011 :
                           3'b000;
 
     assign Forward_RT_M = (M_Rt == W_WriteReg && W_WriteReg != 5'b0 && W_RegWriteEN) ? 3'b001 :
-                          (M_Rt == 5'h1f && W_j_addr) ? 3'b010 :
                           3'b000;
 endmodule //HazardController

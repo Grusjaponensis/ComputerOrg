@@ -5,6 +5,7 @@
 `define Jr_Jump 3'b011
 
 module D_NPC(
+    input [31:0] Pc4_F,
     input [31:0] Pc4,
     input [25:0] Addr26,
     input [31:0] sign_ext_offset,       // beq
@@ -13,8 +14,9 @@ module D_NPC(
     input CmpResult,
     output [31:0] next_PC
 );
-    assign next_PC = (SelPCsrc == `Beq_Branch && CmpResult == 1'b1) ? (Pc4 + 32'h0000_0004 + (sign_ext_offset << 2)) :
+    assign next_PC = (SelPCsrc == `No_Branch) ? Pc4_F :
+                     (SelPCsrc == `Beq_Branch && CmpResult == 1'b1) ? (Pc4 + (sign_ext_offset << 2)) :
                      (SelPCsrc == `Jal_Jump) ? {Pc4[31:28], Addr26, {2{1'b0}}} :
                      (SelPCsrc == `Jr_Jump) ? RF_RD1 :
-                     Pc4;
+                     Pc4_F;
 endmodule //NPC

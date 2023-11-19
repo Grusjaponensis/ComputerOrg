@@ -4,10 +4,12 @@
 `define ALU_and 4'b0010
 `define ALU_or 4'b0011
 `define ALU_lui 4'b0100
+`define ALU_jal 4'b0101
 
 module E_ALU(
     input [31:0] srcA,
     input [31:0] srcB,
+    input [31:0] pc4,
     input [3:0] ALUop,
     output [31:0] Result
 );
@@ -15,6 +17,7 @@ module E_ALU(
                     (ALUop == `ALU_sub) ? srcA - srcB :
                     (ALUop == `ALU_and) ? srcA & srcB :
                     (ALUop == `ALU_or) ? srcA | srcB :
-                    (ALUop == `ALU_lui) ? srcB << 16 :      // lui
+                    (ALUop == `ALU_lui) ? srcB << 16 :                  // lui
+                    (ALUop == `ALU_jal) ? pc4 + 32'h0000_0004 :         // jal
                     32'h0000_0000;
 endmodule //ALU

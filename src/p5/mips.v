@@ -13,6 +13,7 @@
 `define ALU_and 4'b0010
 `define ALU_or 4'b0011
 `define ALU_lui 4'b0100
+`define ALU_jal 4'b0101
 
 /////////// SelExtRes //////////
 `define EXT_sign 1'b0
@@ -67,6 +68,103 @@ module mips(
     wire [31:0] ID_Instr;
     wire [31:0] ID_Pc4;
 
+    //////////////////   D   /////////////////////
+
+    /* ----- Splitter -----*/
+    wire [25:0] D_Addr26;
+    wire [15:0] D_Imm16;
+    wire [5:0] D_func;
+    wire [4:0] D_Rd, D_Rt, D_Rs;
+    wire [5:0] D_Op;
+
+    /* ----- GRF -----*/
+    wire [31:0] Concurrent_Pc = WB_Pc4 - 32'h0000_0004;
+    wire [31:0] D_RF_RD1_original, D_RF_RD2_original;
+    wire [31:0] D_RF_RD1 = (D_Rs == WB_WriteReg && D_Rs != 5'b0 && W_RegWriteEN) ? WB_Result : D_RF_RD1_original;   // forward inside
+    wire [31:0] D_RF_RD2 = (D_Rt == WB_WriteReg && D_Rt != 5'b0 && W_RegWriteEN) ? WB_Result : D_RF_RD2_original;
+
+    /* ----- Extender -----*/
+    wire [31:0] D_ExtResult;
+
+    /* ----- CMP -----*/
+    wire D_CmpResult;
+    wire [31:0] D_CMP_srcA = (Forward_RS_D == 3'b001) ? MEM_ALUout :
+                             (Forward_RS_D == 3'b010) ? WB_Result :
+                             D_RF_RD1;
+    wire [31:0] D_CMP_srcB = (Forward_RT_D == 3'b001) ? MEM_ALUout :
+                             (Forward_RT_D == 3'b010) ? WB_Result :
+                             D_RF_RD2;
+
+    /* ----- NPC -----*/
+    wire [31:0] D_next_PC;
+    wire [31:0] D_NPC_ra = (Forward_PC_D == 3'b001) ? MEM_ALUout : D_RF_RD1;
+    /* ----- ID_EX -----*/
+    wire [31:0] EX_Instr, EX_Pc4, EX_Rs_Data, EX_Rt_Data, EX_Ext;
+    wire [4:0] EX_Rs, EX_Rt, EX_Rd;
+
+    /* ----- GeneralController -----*/
+    wire D_SelExtRes;
+    wire [2:0] D_SelPCsrc;
+    wire [2:0] D_CMPop;
+
+    //////////////////   E   /////////////////////
+
+    /* ----- ALU -----*/
+    wire [31:0] E_ALU_srcA_FWD = (Forward_RS_E == 3'b001) ? MEM_ALUout :
+                                 (Forward_RS_E == 3'b010) ? WB_Result :
+                                 EX_Rs_Data;
+    wire [31:0] E_ALU_srcB_FWD = (Forward_RT_E == 3'b001) ? MEM_ALUout :
+                                 (Forward_RT_E == 3'b010) ? WB_Result :
+                                 EX_Rt_Data;
+    wire [31:0] E_ALU_srcB = (E_SelALUsrc == `Rt_Data) ? E_ALU_srcB_FWD : EX_Ext;
+    
+    wire [31:0] E_ALU_Result;
+
+    /* ----- EX_MEM -----*/
+    wire [4:0] E_WriteReg = (E_SelRegDst == `RF_rt) ? EX_Rt :
+                             (E_SelRegDst == `RF_rd) ? EX_Rd :
+                             5'h1f;                             // jal
+    wire [31:0] MEM_Instr, MEM_Pc4, MEM_ALUout, MEM_WriteData;
+    wire [4:0] MEM_WriteReg;
+
+    /* ----- E_GeneralCtrl -----*/
+    wire E_SelALUsrc;
+    wire [3:0] E_ALUop;
+    wire [2:0] E_SelRegDst;
+
+    //////////////////   M   /////////////////////
+
+    /* ----- DM -----*/
+    wire [31:0] M_DM_WriteData_FWD = (Forward_RT_M == 3'b001) ? WB_Result :
+                                     MEM_WriteData;
+    wire [31:0] M_Pc = MEM_Pc4 - 32'h0000_0004;
+    wire [31:0] M_DM_ReadData;
+
+    /* ----- MEM_WB -----*/
+    wire [31:0] WB_Instr, WB_Pc4, WB_ALUout, WB_DM_ReadData;
+    wire [4:0] WB_WriteReg;
+
+    /* ----- M_GeneralCtrl -----*/
+    wire M_DMWriteEN, M_DMReadEN;
+
+    //////////////////   W   /////////////////////
+    
+    /* ----- RF -----*/
+    wire [31:0] WB_Pc_with_DelaySlot = WB_Pc4 + 32'h0000_0004;
+    wire [31:0] WB_Result = (W_SelRegWD == `DM_Data) ? WB_DM_ReadData :
+                            (W_SelRegWD == `ALU_Data) ? WB_ALUout :
+                            WB_Pc_with_DelaySlot;                       // jal: PC + 8 -> $31
+
+    /* ----- W_GeneralCtrl -----*/
+    wire W_RegWriteEN;
+    wire [3:0] W_SelRegWD;
+
+    /* ----- HazardController -----*/
+    wire PC_En, IF_ID_En, ID_EX_clr;        // stall
+    wire [2:0] Forward_RS_D, Forward_RT_D, Forward_PC_D, Forward_RS_E, Forward_RT_E, Forward_RT_M; // forward ctrl
+
+    //////////////////   F   /////////////////////
+
     F_PC PC(
         .clk(clk),
         .reset(reset),
@@ -93,43 +191,6 @@ module mips(
 
     //////////////////   D   /////////////////////
 
-    /* ----- Splitter -----*/
-    wire [25:0] D_Addr26;
-    wire [15:0] D_Imm16;
-    wire [5:0] D_func;
-    wire [4:0] D_Rd, D_Rt, D_Rs;
-    wire [5:0] D_Op;
-
-    /* ----- GRF -----*/
-    wire [31:0] D_Pc = ID_Pc4 - 32'h0000_0004;
-    wire [31:0] D_RF_RD1_original, D_RF_RD2_original;
-    wire [31:0] D_RF_RD1 = (D_Rs == WB_WriteReg) ? WB_Result : D_RF_RD1_original;   // forward inside
-    wire [31:0] D_RF_RD2 = (D_Rt == WB_WriteReg) ? WB_Result : D_RF_RD2_original;
-
-    /* ----- Extender -----*/
-    wire [31:0] D_ExtResult;
-
-    /* ----- CMP -----*/
-    wire D_CmpResult;
-    wire [31:0] D_CMP_srcA = (Forward_RS_D == 3'b001) ? MEM_ALUout :
-                             (Forward_RS_D == 3'b010) ? WB_Result :
-                             D_RF_RD1;
-    wire [31:0] D_CMP_srcB = (Forward_RT_D == 3'b001) ? MEM_ALUout :
-                             (Forward_RT_D == 3'b010) ? WB_Result :
-                             D_RF_RD2;
-
-    /* ----- NPC -----*/
-    wire [31:0] D_next_PC;
-    wire [31:0] D_NPC_ra = (Forward_PC_D == 3'b001) ? MEM_ALUout : D_RF_RD1;
-    /* ----- ID_EX -----*/
-    wire [31:0] EX_Instr, EX_Pc4, EX_Rs_Data, EX_Rt_Data, EX_Ext;
-    wire [4:0] EX_Rs, EX_Rt, EX_Rd;
-
-    /* ----- GeneralController -----*/
-    wire D_SelExtRes;
-    wire [2:0] D_SelPCsrc;
-    wire [2:0] D_CMPop;
-
     D_Splitter Splitter(
         .Instr(ID_Instr),
         .Addr26(D_Addr26),
@@ -145,7 +206,7 @@ module mips(
         .clk(clk),
         .reset(reset),
         .RegWrite(W_RegWriteEN),
-        .Pc(D_Pc),
+        .Pc(Concurrent_Pc),
         .RF_WD(WB_Result),
         .A1(D_Rs),
         .A2(D_Rt),
@@ -168,6 +229,7 @@ module mips(
     );
 
     D_NPC NPC(
+        .Pc4_F(F_Pc4),
         .Pc4(ID_Pc4),
         .Addr26(D_Addr26),
         .sign_ext_offset(D_ExtResult),
@@ -210,34 +272,10 @@ module mips(
 
     //////////////////   E   /////////////////////
 
-    /* ----- ALU -----*/
-    wire [31:0] E_ALU_srcA_FWD = (Forward_RS_E == 3'b001) ? MEM_ALUout :
-                                 (Forward_RS_E == 3'b010) ? WB_Result :
-                                 (Forward_RS_E == 3'b011) ? EX_Pc4 :
-                                 EX_Rs_Data;
-    wire [31:0] E_ALU_srcB_FWD = (Forward_RT_E == 3'b001) ? MEM_ALUout :
-                                 (Forward_RT_E == 3'b010) ? WB_Result :
-                                 (Forward_RT_E == 3'b011) ? EX_Pc4 :
-                                 EX_Rt_Data;
-    wire [31:0] E_ALU_srcB = (E_SelALUsrc == `Rt_Data) ? E_ALU_srcB_FWD :
-                             EX_Ext;
-    wire [31:0] E_ALU_Result;
-
-    /* ----- EX_MEM -----*/
-    wire [4:0] E_WriteReg = (E_SelRegDst == `RF_rt) ? EX_Rt :
-                             (E_SelRegDst == `RF_rd) ? EX_Rd :
-                             5'h1f;                             // jal
-    wire [31:0] MEM_Instr, MEM_Pc4, MEM_ALUout, MEM_WriteData;
-    wire [4:0] MEM_WriteReg;
-
-    /* ----- E_GeneralCtrl -----*/
-    wire E_SelALUsrc;
-    wire [3:0] E_ALUop;
-    wire [2:0] E_SelRegDst;
-
     E_ALU ALU(
         .srcA(E_ALU_srcA_FWD), // need fwd
         .srcB(E_ALU_srcB), // need fwd
+        .pc4(EX_Pc4),
         .ALUop(E_ALUop),
         .Result(E_ALU_Result)
     );
@@ -267,20 +305,6 @@ module mips(
     );
 
     //////////////////   M   /////////////////////
-
-    /* ----- DM -----*/
-    wire [31:0] M_DM_WriteData_FWD = (Forward_RT_M == 3'b001) ? WB_Result :
-                                     (Forward_RT_M == 3'b010) ? MEM_Pc4 :
-                                     MEM_WriteData;
-    wire [31:0] M_Pc = MEM_Pc4 - 32'h0000_0004;
-    wire [31:0] M_DM_ReadData;
-
-    /* ----- MEM_WB -----*/
-    wire [31:0] WB_Instr, WB_Pc4, WB_ALUout, WB_DM_ReadData;
-    wire [4:0] WB_WriteReg;
-
-    /* ----- M_GeneralCtrl -----*/
-    wire M_DMWriteEN, M_DMReadEN;
 
     M_DM DM(
         .clk(clk),
@@ -318,20 +342,6 @@ module mips(
     
     //////////////////   W   /////////////////////
     
-    /* ----- RF -----*/
-    wire [31:0] WB_Pc_with_DelaySlot = WB_Pc4 + 32'h0000_0004;
-    wire [31:0] WB_Result = (W_SelRegWD == `DM_Data) ? WB_DM_ReadData :
-                            (W_SelRegWD == `ALU_Data) ? WB_ALUout :
-                            WB_Pc_with_DelaySlot;                       // jal: PC + 8 -> $31
-
-    /* ----- W_GeneralCtrl -----*/
-    wire W_RegWriteEN;
-    wire [3:0] W_SelRegWD;
-
-    /* ----- HazardController -----*/
-    wire PC_En, IF_ID_En, ID_EX_clr;        // stall
-    wire [2:0] Forward_RS_D, Forward_RT_D, Forward_PC_D, Forward_RS_E, Forward_RT_E, Forward_RT_M; // forward ctrl
-
     G_GeneralController W_GeneralCtrl(
         .op(WB_Instr[`Op]),
         .func(WB_Instr[`func]),

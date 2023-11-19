@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-module EX_MEM(
+module _EX_MEM(
     input clk,
     input reset,
     input [31:0] Instr_EX,
