@@ -158,29 +158,16 @@ module G_HazardController(
         .RegWriteEN(W_RegWriteEN)
     );
 
-    // assign Forward_RS_D = (D_branch && M_cal_r && (D_Rs == M_Rd) && M_Rd != 5'b0) ? 3'b001 :        // for beq data(rs_T_use = rt_T_use = 0)
-    //                       (D_branch && M_cal_i && (D_Rs == M_Rt) && M_Rt != 5'b0) ? 3'b001 :
-    //                       (D_branch && W_cal_r && (D_Rs == W_Rd) && W_Rd != 5'b0) ? 3'b010 :
-    //                       (D_branch && W_cal_i && (D_Rs == W_Rt) && W_Rt != 5'b0) ? 3'b010 :
-    //                       (D_branch && W_load && (D_Rs == W_Rt) && W_Rt != 5'b0) ? 3'b010 :
-    //                       3'b000;
     assign Forward_RS_D = (D_Rs == M_WriteReg && M_WriteReg != 5'b0 && M_RegWriteEN) ? 3'b001 :
                           (D_Rs == W_WriteReg && W_WriteReg != 5'b0 && W_RegWriteEN) ? 3'b010 :
                           3'b000;
-    // assign Forward_RT_D = (D_branch && M_cal_r && (D_Rt == M_Rd) && M_Rd != 5'b0) ? 3'b001 :
-    //                       (D_branch && M_cal_i && (D_Rt == M_Rt) && M_Rt != 5'b0) ? 3'b001 :
-    //                       (D_branch && W_cal_r && (D_Rt == W_Rd) && W_Rd != 5'b0) ? 3'b010 :
-    //                       (D_branch && W_cal_i && (D_Rt == W_Rt) && W_Rt != 5'b0) ? 3'b010 :
-    //                       (D_branch && W_load && (D_Rt == W_Rt) && W_Rt != 5'b0) ? 3'b010 :
-    //                       3'b000;
+
     assign Forward_RT_D = (D_Rt == M_WriteReg && M_WriteReg != 5'b0 && M_RegWriteEN) ? 3'b001 :
                           (D_Rt == M_WriteReg && M_WriteReg != 5'b0 && M_RegWriteEN) ? 3'b010 :
                           3'b000;
 
-    // assign Forward_PC_D = (D_j_r && M_cal_r && (D_Rs == M_Rd) && M_Rd != 5'b0) ? 3'b001 :
-    //                       (D_j_r && M_cal_i && (D_Rs == M_Rt) && M_Rt != 5'b0) ? 3'b001 :
-    //                       3'b000;
-    assign Forward_PC_D = (D_Rs == M_WriteReg && M_WriteReg != 5'b0 && M_RegWriteEN) ? 3'b001 : 3'b000;
+    assign Forward_PC_D = (D_Rs == M_WriteReg && M_WriteReg != 5'b0 && M_RegWriteEN) ? 3'b001 : 
+                          3'b000;
 
     assign Forward_RS_E = (E_Rs == M_WriteReg && M_WriteReg != 5'b0 && M_RegWriteEN) ? 3'b001 :
                           (E_Rs == W_WriteReg && W_WriteReg != 5'b0 && W_RegWriteEN) ? 3'b010 :

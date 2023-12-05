@@ -62,7 +62,7 @@ module G_ClassifyUnit(
 
 
     assign cal_r = add | sub;
-    assign cal_i = ori;
+    assign cal_i = ori | lui;
     assign load = lw;
     assign store = sw;
     assign branch = beq;
