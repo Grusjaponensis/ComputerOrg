@@ -201,7 +201,7 @@ module G_GeneralController(
                        `RF_rt;
 
     assign SelRegWD = (lw | lh | lb) ? `DM_Data :
-                      (add | sub | _and | _or | addi | slt | sltu | lui | | andi | ori | nop | mfhi | mflo) ? `ALU_Data :
+                      (add | sub | _and | _or | addi | slt | sltu | lui | andi | ori | nop | mfhi | mflo) ? `ALU_Data :
                       jal ? `PC_Data :
                       `DM_Data;
 
